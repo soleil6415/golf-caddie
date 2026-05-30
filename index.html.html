@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="CADDIE" />
+<meta name="theme-color" content="#0c1410" />
+<title>POCKET CADDIE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c1410;
+    --bg2:#101c16;
+    --card:#15231b;
+    --card2:#1b2e23;
+    --line:#273b2e;
+    --green:#4ade80;
+    --green-deep:#16a34a;
+    --lime:#d9f99d;
+    --yell:#facc15;
+    --txt:#e8f3ec;
+    --mut:#7e9587;
+    --up:#fb923c;     /* 打ち上げ warm */
+    --down:#38bdf8;   /* 打ち下ろし cool */
+    --danger:#f87171;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    font-family:"Zen Kaku Gothic New",system-ui,sans-serif;
+    color:var(--txt);
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #16271c 0%, var(--bg) 55%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 26px);
+    padding-bottom:84px;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 16px;}
+  /* header */
+  header{
+    padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;
+    text-align:center;
+  }
+  header .brand{
+    font-family:"Saira Condensed",sans-serif;font-weight:700;
+    letter-spacing:.22em;font-size:15px;color:var(--green);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  header .brand b{color:var(--lime);font-weight:600;}
+  header .course{font-size:12px;color:var(--mut);margin-top:2px;letter-spacing:.04em;}
+  /* tabs (bottom) */
+  nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:rgba(11,18,14,.92);backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    display:flex;justify-content:center;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav .inner{max-width:520px;width:100%;display:flex;}
+  nav button{
+    flex:1;background:none;border:0;color:var(--mut);
+    padding:11px 0 12px;font-family:inherit;font-size:11px;letter-spacing:.05em;
+    display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;
+  }
+  nav button .ic{font-size:20px;line-height:1;}
+  nav button.on{color:var(--green);}
+  nav button.on .ic{filter:drop-shadow(0 0 8px rgba(74,222,128,.5));}
+  /* generic */
+  .view{display:none;animation:fade .25s ease;}
+  .view.on{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .card{
+    background:linear-gradient(180deg,var(--card2),var(--card));
+    border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;
+    box-shadow:0 10px 30px -18px rgba(0,0,0,.8);
+  }
+  .lbl{font-size:11px;letter-spacing:.16em;color:var(--mut);text-transform:uppercase;
+       font-family:"Saira Condensed",sans-serif;font-weight:600;margin-bottom:8px;}
+  .mono{font-family:"JetBrains Mono",monospace;}
+  /* distance input */
+  .distbox{display:flex;align-items:baseline;justify-content:center;gap:8px;margin:2px 0 6px;}
+  .distbox input{
+    width:100%;max-width:230px;background:none;border:0;outline:none;text-align:center;
+    color:var(--lime);font-family:"JetBrains Mono",monospace;font-weight:800;
+    font-size:74px;line-height:1;letter-spacing:-.02em;
+  }
+  .distbox .unit{font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:22px;color:var(--mut);}
+  .gps-row{display:flex;gap:8px;margin-top:6px;}
+  .btn{
+    border:1px solid var(--line);background:var(--card2);color:var(--txt);
+    border-radius:12px;padding:12px;font-family:inherit;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px;transition:.12s;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn.primary{background:var(--green-deep);border-color:var(--green);color:#04140a;font-weight:700;}
+  .btn.ghost{background:transparent;}
+  .btn.wide{width:100%;}
+  .btn.sm{padding:8px 10px;font-size:13px;border-radius:10px;}
+  /* elevation */
+  .elev-head{display:flex;justify-content:space-between;align-items:center;}
+  .elev-val{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:30px;}
+  .elev-val.up{color:var(--up);}
+  .elev-val.down{color:var(--down);}
+  .elev-val.flat{color:var(--mut);}
+  .stepper{display:flex;gap:8px;margin-top:12px;align-items:center;}
+  .stepper button{
+    flex:1;border:1px solid var(--line);background:var(--card2);color:var(--txt);
+    font-family:"JetBrains Mono",monospace;font-weight:700;font-size:18px;
+    border-radius:12px;padding:14px 0;cursor:pointer;
+  }
+  .stepper button:active{transform:scale(.96);}
+  .stepper button.up{border-color:#5b3a22;color:var(--up);}
+  .stepper button.down{border-color:#1e4258;color:var(--down);}
+  .stepper .zero{flex:.7;font-size:12px;letter-spacing:.1em;color:var(--mut);font-family:"Saira Condensed",sans-serif;}
+  /* effective + result */
+  .eff{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 4px;}
+  .eff .num{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:40px;color:var(--txt);}
+  .eff .tag{font-size:11px;color:var(--mut);letter-spacing:.1em;}
+  .rec-primary{
+    text-align:center;padding:18px 12px 16px;border-radius:16px;
+    background:radial-gradient(120% 120% at 50% 0%, #1e3a28, #122017);
+    border:1px solid var(--green);position:relative;overflow:hidden;
+  }
+  .rec-primary:before{content:"RECOMMEND";position:absolute;top:9px;left:0;right:0;
+    font-family:"Saira Condensed",sans-serif;font-size:10px;letter-spacing:.35em;color:var(--green);opacity:.7;}
+  .rec-primary .club{font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:58px;line-height:1;color:var(--lime);margin-top:12px;}
+  .rec-primary .meta{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--mut);margin-top:6px;}
+  .rec-primary .delta{font-weight:700;}
+  .alts{display:flex;gap:8px;margin-top:10px;}
+  .alt{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;}
+  .alt .c{font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:24px;color:var(--txt);}
+  .alt .d{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--mut);margin-top:2px;}
+  .short{color:var(--up);} .over{color:var(--down);} .ok{color:var(--green);}
+  /* club list */
+  .club-row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line);}
+  .club-row:last-child{border-bottom:0;}
+  .club-row .name{font-family:"Saira Condensed",sans-serif;font-weight:700;font-size:20px;width:64px;}
+  .club-row .name.off{color:var(--mut);opacity:.5;}
+  .carry{display:flex;flex-direction:column;flex:1;}
+  .carry .c-main{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:17px;}
+  .carry .c-sub{font-size:11px;color:var(--mut);}
+  .toggle{width:44px;height:26px;border-radius:20px;background:#2a3a30;position:relative;flex:none;cursor:pointer;transition:.15s;border:0;}
+  .toggle.on{background:var(--green-deep);}
+  .toggle:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.15s;}
+  .toggle.on:after{left:21px;}
+  .icon-btn{background:none;border:0;color:var(--mut);font-size:17px;cursor:pointer;padding:6px;}
+  /* inputs */
+  .field{margin:12px 0;}
+  .field label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px;letter-spacing:.04em;}
+  .field input,.field select{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+    color:var(--txt);padding:13px;font-family:inherit;font-size:16px;outline:none;
+  }
+  .field input:focus,.field select:focus{border-color:var(--green);}
+  .row2{display:flex;gap:10px;}.row2>*{flex:1;}
+  .seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .seg button{flex:1;background:none;border:0;color:var(--mut);padding:11px 0;font-family:inherit;font-size:14px;cursor:pointer;}
+  .seg button.on{background:var(--green-deep);color:#04140a;font-weight:700;}
+  .slider{width:100%;accent-color:var(--green);margin-top:6px;}
+  .hint{font-size:11.5px;color:var(--mut);line-height:1.6;margin-top:8px;}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+    background:#04140a;border:1px solid var(--green);color:var(--lime);padding:10px 18px;border-radius:30px;
+    font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  h2.sec{font-family:"Saira Condensed",sans-serif;font-weight:600;letter-spacing:.1em;font-size:14px;color:var(--green);
+    text-transform:uppercase;margin:18px 4px 4px;}
+  .empty{text-align:center;color:var(--mut);font-size:13px;padding:18px;}
+  .target-row{display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid var(--line);}
+  .target-row .t-name{flex:1;}
+  .target-row .t-name b{font-weight:700;}
+  .target-row .t-sub{font-size:11px;color:var(--mut);font-family:"JetBrains Mono",monospace;}
+  .pill{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--mut);letter-spacing:.08em;}
+  .pill.a{border-color:var(--green);color:var(--green);}
+  .pill.b{border-color:var(--down);color:var(--down);}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">⛳ POCKET <b>CADDIE</b></div>
+  <div class="course" id="courseLabel">霞山カントリー倶楽部 · ベント1グリーン</div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ おすすめ ============ -->
+  <section class="view on" id="v-rec">
+    <div class="card">
+      <div class="lbl">残り距離</div>
+      <div class="distbox">
+        <input id="distInput" inputmode="numeric" pattern="[0-9]*" value="150" />
+        <span class="unit" id="distUnitLbl">Y</span>
+      </div>
+      <div class="gps-row">
+        <button class="btn ghost" style="flex:1" onclick="measureGPS()" id="gpsBtn">📍 現在地から測定</button>
+        <button class="btn ghost sm" onclick="adjustDist(-5)">−5</button>
+        <button class="btn ghost sm" onclick="adjustDist(5)">+5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="elev-head">
+        <div class="lbl" style="margin:0">高低差（打ち上げ＋ / 打ち下ろし −）</div>
+        <div class="elev-val flat" id="elevVal">0</div>
+      </div>
+      <div class="stepper">
+        <button class="down" onclick="adjustElev(-5)">−5</button>
+        <button class="down" onclick="adjustElev(-1)">−1</button>
+        <button class="zero" onclick="setElev(0)">0</button>
+        <button class="up" onclick="adjustElev(1)">+1</button>
+        <button class="up" onclick="adjustElev(5)">+5</button>
+      </div>
+      <div class="hint" id="elevUnitHint">単位: メートル（m）</div>
+    </div>
+
+    <div class="card">
+      <div class="eff">
+        <span class="tag">実効距離（plays like）</span>
+        <span class="num mono" id="effVal">150</span>
+        <span class="tag" id="effUnit">Y</span>
+      </div>
+      <div class="rec-primary" id="recPrimary">
+        <div class="club" id="recClub">7I</div>
+        <div class="meta" id="recMeta">キャリー 150Y · ピッタリ</div>
+      </div>
+      <div class="alts" id="recAlts"></div>
+    </div>
+  </section>
+
+  <!-- ============ クラブ ============ -->
+  <section class="view" id="v-clubs">
+    <div class="card">
+      <div class="lbl">本日のバッグ（タップでON/OFF・数値はキャリー）</div>
+      <div id="clubList"></div>
+    </div>
+    <button class="btn primary wide" onclick="openClubEditor()">＋ クラブを追加</button>
+    <div class="hint" style="padding:0 4px">
+      登録は<b>キャリー（落下点までの距離）</b>を基準に。ランは読めないので、グリーンを狙う番手はキャリーで判断するのが正解。
+      練習場では「止まった所」ではなく「落ちた地点」を、ベストではなく7〜8割再現できる平均〜やや手前で。
+    </div>
+  </section>
+
+  <!-- ============ 設定 ============ -->
+  <section class="view" id="v-set">
+    <h2 class="sec">距離・補正</h2>
+    <div class="card">
+      <div class="field">
+        <label>距離の単位</label>
+        <div class="seg" id="distUnitSeg">
+          <button data-u="Y" class="on">ヤード (Y)</button>
+          <button data-u="m">メートル (m)</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>高低差の入力単位</label>
+        <div class="seg" id="elevUnitSeg">
+          <button data-u="m" class="on">メートル (m)</button>
+          <button data-u="Y">ヤード (Y)</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>高低差の補正係数 <span id="factorLbl" class="mono" style="color:var(--green)">0.75</span>
+          <span style="color:var(--mut)">（高低差1あたり○の距離を加減）</span></label>
+        <input type="range" class="slider" id="factorSlider" min="0.3" max="1.5" step="0.05" value="0.75">
+        <div class="hint">
+          目安: レンジファインダーの "plays like" 同様、打ち上げは飛ばず・打ち下ろしは飛ぶ。
+          番手別では概ね 長い番手0.8／ミドル0.7／短い番手0.6（yd/yd）。迷ったら0.7前後で、自分の結果を見て微調整。
+        </div>
+      </div>
+    </div>
+
+    <h2 class="sec">グリーン / GPS</h2>
+    <div class="card">
+      <div class="field">
+        <label>使用中のグリーン（2グリーンのコース用）</label>
+        <div class="seg" id="greenSeg">
+          <button data-g="A" class="on">A グリーン</button>
+          <button data-g="B">B グリーン</button>
+        </div>
+        <div class="hint">霞山は1グリーンなので A のままでOK。2グリーンのコースで使う時だけ切り替え。</div>
+      </div>
+      <div class="field">
+        <label>測定する目標地点</label>
+        <select id="targetSelect"></select>
+      </div>
+      <div class="row2">
+        <button class="btn sm" onclick="recordTarget()">📍 現在地を目標に保存</button>
+        <button class="btn sm ghost" onclick="renderTargets()">↻ 一覧更新</button>
+      </div>
+      <div id="targetList" style="margin-top:10px"></div>
+      <div class="hint">
+        GPSで「ピンまでの距離」を出すには、先に<b>グリーンの位置を記録</b>しておく必要があります（旗の当日位置は配信されないため、市販アプリも同じ仕組み）。
+        ラウンド中にグリーン上で「現在地を目標に保存」しておけば、次回から手前/センター/奥を選んで測れます。
+        ※GPSは https で開いた時のみ動作（後述のホーム画面追加が確実）。
+      </div>
+    </div>
+
+    <h2 class="sec">データ</h2>
+    <div class="card">
+      <div class="row2">
+        <button class="btn sm" onclick="exportData()">⤓ バックアップ書き出し</button>
+        <button class="btn sm" onclick="document.getElementById('importFile').click()">⤒ 読み込み</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+      <button class="btn sm ghost wide" style="margin-top:10px;color:var(--danger);border-color:#5a2a2a" onclick="resetAll()">全データをリセット</button>
+      <div class="hint">データはこの端末のブラウザ内に保存されます（localStorage）。機種変・バックアップ時は書き出しを。</div>
+    </div>
+    <div class="hint" style="text-align:center;padding:6px 0 0;opacity:.6">POCKET CADDIE · personal build</div>
+  </section>
+
+</div>
+
+<!-- club editor modal (simple) -->
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center;">
+  <div class="card" style="width:100%;max-width:520px;margin:0;border-radius:20px 20px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom) + 20px);">
+    <div class="lbl" id="modalTitle">クラブを追加</div>
+    <div class="field"><label>番手名（例: 7I, PW, 52°, 5W, Driver）</label><input id="m-name" placeholder="7I"></div>
+    <div class="row2">
+      <div class="field"><label>キャリー（<span class="mUnit">Y</span>）</label><input id="m-carry" inputmode="numeric" placeholder="150"></div>
+      <div class="field"><label>ラン（任意・<span class="mUnit">Y</span>）</label><input id="m-run" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="row2" style="margin-top:6px">
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn primary" onclick="saveClub()">保存</button>
+    </div>
+  </div>
+</div>
+
+<nav><div class="inner">
+  <button class="on" data-v="rec" onclick="tab('rec')"><span class="ic">⛳</span>おすすめ</button>
+  <button data-v="clubs" onclick="tab('clubs')"><span class="ic">🏌️</span>クラブ</button>
+  <button data-v="set" onclick="tab('set')"><span class="ic">⚙️</span>設定</button>
+</div></nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- storage layer: localStorage with in-memory fallback ---------- */
+const mem = {};
+const store = {
+  get(k, def){
+    try{ const v = localStorage.getItem(k); return v===null ? def : JSON.parse(v); }
+    catch(e){ return (k in mem) ? mem[k] : def; }
+  },
+  set(k, v){
+    try{ localStorage.setItem(k, JSON.stringify(v)); }
+    catch(e){ mem[k] = v; }
+  }
+};
+
+/* ---------- default state ---------- */
+const DEFAULT_CLUBS = [
+  {name:"Driver",carry:230,run:25,bag:true},
+  {name:"3W",carry:210,run:18,bag:true},
+  {name:"5W",carry:195,run:15,bag:true},
+  {name:"UT",carry:185,run:10,bag:true},
+  {name:"5I",carry:170,run:6,bag:true},
+  {name:"6I",carry:160,run:5,bag:true},
+  {name:"7I",carry:150,run:4,bag:true},
+  {name:"8I",carry:140,run:3,bag:true},
+  {name:"9I",carry:130,run:2,bag:true},
+  {name:"PW",carry:115,run:2,bag:true},
+  {name:"52°",carry:95,run:1,bag:true},
+  {name:"56°",carry:78,run:1,bag:true},
+  {name:"58°",carry:60,run:0,bag:true},
+];
+
+let S = {
+  clubs: store.get("clubs", DEFAULT_CLUBS),
+  dist: store.get("dist", 150),
+  elev: store.get("elev", 0),
+  distUnit: store.get("distUnit","Y"),
+  elevUnit: store.get("elevUnit","m"),
+  factor: store.get("factor",0.75),
+  green: store.get("green","A"),
+  targets: store.get("targets",[]),
+  activeTarget: store.get("activeTarget",null),
+};
+function persist(){
+  for(const k of ["clubs","dist","elev","distUnit","elevUnit","factor","green","targets","activeTarget"]) store.set(k,S[k]);
+}
+
+/* ---------- helpers ---------- */
+const YD_PER_M = 1.09361;
+function elevInDistUnit(){
+  // convert stored elevation (in elevUnit) into the distance unit
+  let e = S.elev;
+  if(S.elevUnit===S.distUnit) return e;
+  if(S.elevUnit==="m" && S.distUnit==="Y") return e*YD_PER_M;
+  if(S.elevUnit==="Y" && S.distUnit==="m") return e/YD_PER_M;
+  return e;
+}
+function effectiveDist(){
+  return Math.round(S.dist + elevInDistUnit()*S.factor);
+}
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ---------- recommendation ---------- */
+function recommend(){
+  const eff = effectiveDist();
+  document.getElementById("effVal").textContent = eff;
+  document.getElementById("effUnit").textContent = S.distUnit;
+
+  const bag = S.clubs.filter(c=>c.bag && c.carry>0);
+  const primEl = document.getElementById("recClub");
+  const metaEl = document.getElementById("recMeta");
+  const altsEl = document.getElementById("recAlts");
+  if(bag.length===0){ primEl.textContent="—"; metaEl.textContent="クラブを登録してください"; altsEl.innerHTML=""; return; }
+
+  // sort by closeness to effective distance
+  const ranked = bag.map(c=>({...c, diff: c.carry - eff}))
+                    .sort((a,b)=>Math.abs(a.diff)-Math.abs(b.diff));
+
+  // primary = smallest overshoot among clubs that reach; else the longest club
+  const reaching = ranked.filter(c=>c.diff>=0).sort((a,b)=>a.diff-b.diff);
+  const primary = reaching.length ? reaching[0] : bag.slice().sort((a,b)=>b.carry-a.carry)[0];
+
+  primEl.textContent = primary.name;
+  const d = primary.carry - eff;
+  let dtxt = d===0 ? "ピッタリ" : (d>0 ? `+${d}${S.distUnit} 余る` : `${d}${S.distUnit} 足りない`);
+  metaEl.innerHTML = `キャリー ${primary.carry}${S.distUnit} · <span class="delta ${d>0?'over':d<0?'short':'ok'}">${dtxt}</span>`;
+
+  // alternatives = nearest 2 others
+  const others = ranked.filter(c=>c.name!==primary.name).slice(0,2);
+  altsEl.innerHTML = others.map(c=>{
+    const dd=c.carry-eff;
+    const cls = dd>0?'over':dd<0?'short':'ok';
+    const sign = dd>0?`+${dd}`:`${dd}`;
+    return `<div class="alt"><div class="c">${c.name}</div><div class="d ${cls}">${c.carry}${S.distUnit} · ${dd===0?'±0':sign}</div></div>`;
+  }).join("");
+}
+
+/* ---------- distance / elevation UI ---------- */
+function refreshDistUI(){
+  document.getElementById("distInput").value = S.dist;
+  document.getElementById("distUnitLbl").textContent = S.distUnit;
+  document.querySelector(".mUnit") && document.querySelectorAll(".mUnit").forEach(e=>e.textContent=S.distUnit);
+}
+function refreshElevUI(){
+  const v=document.getElementById("elevVal");
+  const sign = S.elev>0?`+${S.elev}`:`${S.elev}`;
+  v.textContent = sign + (S.elev!==0?` ${S.elevUnit}`:"");
+  v.className = "elev-val "+(S.elev>0?"up":S.elev<0?"down":"flat");
+  document.getElementById("elevUnitHint").textContent = "単位: "+(S.elevUnit==="m"?"メートル（m）":"ヤード（Y）");
+}
+function adjustDist(n){ S.dist=Math.max(0,S.dist+n); refreshDistUI(); persist(); recommend(); }
+function adjustElev(n){ S.elev+=n; refreshElevUI(); persist(); recommend(); }
+function setElev(n){ S.elev=n; refreshElevUI(); persist(); recommend(); }
+
+document.getElementById("distInput").addEventListener("input",e=>{
+  const n=parseInt(e.target.value.replace(/[^0-9]/g,''))||0; S.dist=n; persist(); recommend();
+});
+
+/* ---------- clubs ---------- */
+function renderClubs(){
+  const list=document.getElementById("clubList");
+  if(S.clubs.length===0){ list.innerHTML='<div class="empty">クラブが未登録です</div>'; return; }
+  list.innerHTML = S.clubs.map((c,i)=>`
+    <div class="club-row">
+      <button class="toggle ${c.bag?'on':''}" onclick="toggleBag(${i})"></button>
+      <div class="name ${c.bag?'':'off'}">${c.name}</div>
+      <div class="carry">
+        <div class="c-main">${c.carry}${S.distUnit}<span style="color:var(--mut);font-weight:500;font-size:13px"> キャリー</span></div>
+        <div class="c-sub">${c.run? 'ラン +'+c.run+S.distUnit+' / トータル '+(c.carry+c.run)+S.distUnit : 'ラン未設定'}</div>
+      </div>
+      <button class="icon-btn" onclick="openClubEditor(${i})">✎</button>
+      <button class="icon-btn" onclick="delClub(${i})">🗑</button>
+    </div>`).join("");
+}
+function toggleBag(i){ S.clubs[i].bag=!S.clubs[i].bag; persist(); renderClubs(); recommend(); }
+function delClub(i){ if(confirm(`${S.clubs[i].name} を削除しますか？`)){ S.clubs.splice(i,1); persist(); renderClubs(); recommend(); } }
+
+let editIdx=null;
+function openClubEditor(i){
+  editIdx = (typeof i==="number")?i:null;
+  document.getElementById("modalTitle").textContent = editIdx!==null?"クラブを編集":"クラブを追加";
+  document.getElementById("m-name").value = editIdx!==null?S.clubs[i].name:"";
+  document.getElementById("m-carry").value = editIdx!==null?S.clubs[i].carry:"";
+  document.getElementById("m-run").value = editIdx!==null?(S.clubs[i].run||""):"";
+  document.querySelectorAll(".mUnit").forEach(e=>e.textContent=S.distUnit);
+  document.getElementById("modal").style.display="flex";
+}
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+function saveClub(){
+  const name=document.getElementById("m-name").value.trim();
+  const carry=parseInt(document.getElementById("m-carry").value)||0;
+  const run=parseInt(document.getElementById("m-run").value)||0;
+  if(!name){ toast("番手名を入力してください"); return; }
+  const obj={name,carry,run,bag:true};
+  if(editIdx!==null){ obj.bag=S.clubs[editIdx].bag; S.clubs[editIdx]=obj; }
+  else S.clubs.push(obj);
+  S.clubs.sort((a,b)=>b.carry-a.carry);
+  persist(); renderClubs(); recommend(); closeModal();
+}
+
+/* ---------- settings ---------- */
+function bindSeg(id, key, cb){
+  document.querySelectorAll(`#${id} button`).forEach(b=>{
+    b.onclick=()=>{
+      document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      S[key]=b.dataset.u||b.dataset.g; persist(); cb&&cb();
+    };
+  });
+}
+function initSettings(){
+  // segments reflect state
+  document.querySelectorAll("#distUnitSeg button").forEach(b=>b.classList.toggle("on",b.dataset.u===S.distUnit));
+  document.querySelectorAll("#elevUnitSeg button").forEach(b=>b.classList.toggle("on",b.dataset.u===S.elevUnit));
+  document.querySelectorAll("#greenSeg button").forEach(b=>b.classList.toggle("on",b.dataset.g===S.green));
+  bindSeg("distUnitSeg","distUnit",()=>{ refreshDistUI(); renderClubs(); refreshElevUI(); recommend(); });
+  bindSeg("elevUnitSeg","elevUnit",()=>{ refreshElevUI(); recommend(); });
+  bindSeg("greenSeg","green",()=>{ renderTargets(); });
+
+  const fs=document.getElementById("factorSlider"); fs.value=S.factor;
+  document.getElementById("factorLbl").textContent=S.factor.toFixed(2);
+  fs.oninput=()=>{ S.factor=parseFloat(fs.value); document.getElementById("factorLbl").textContent=S.factor.toFixed(2); persist(); recommend(); };
+}
+
+/* ---------- GPS / targets ---------- */
+function haversine(a,b){
+  const R=6371000,toR=x=>x*Math.PI/180;
+  const dLat=toR(b.lat-a.lat),dLng=toR(b.lng-a.lng);
+  const s=Math.sin(dLat/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s)); // meters
+}
+function recordTarget(){
+  if(!navigator.geolocation){ toast("この端末はGPS非対応"); return; }
+  toast("位置取得中…");
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const name=prompt("目標の名前（例: 1番センター, 18番手前）","グリーンセンター");
+    if(name===null) return;
+    S.targets.push({name,green:S.green,lat:pos.coords.latitude,lng:pos.coords.longitude});
+    S.activeTarget=S.targets.length-1;
+    persist(); renderTargets();
+    toast("保存しました（誤差 約"+Math.round(pos.coords.accuracy)+"m）");
+  },err=>{
+    toast("GPS取得失敗: "+(err.code===1?"許可が必要":"https で開いてください"));
+  },{enableHighAccuracy:true,timeout:10000});
+}
+function renderTargets(){
+  const sel=document.getElementById("targetSelect");
+  const inGreen=S.targets.map((t,i)=>({...t,i})).filter(t=>t.green===S.green);
+  sel.innerHTML = inGreen.length? inGreen.map(t=>`<option value="${t.i}" ${t.i===S.activeTarget?'selected':''}>${t.name}</option>`).join("")
+                               : `<option value="">（${S.green}グリーンの目標が未登録）</option>`;
+  sel.onchange=()=>{ S.activeTarget=parseInt(sel.value); persist(); };
+  const list=document.getElementById("targetList");
+  if(S.targets.length===0){ list.innerHTML='<div class="empty">目標地点が未登録です</div>'; return; }
+  list.innerHTML=S.targets.map((t,i)=>`
+    <div class="target-row">
+      <span class="pill ${t.green==='A'?'a':'b'}">${t.green}</span>
+      <div class="t-name"><b>${t.name}</b><div class="t-sub">${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}</div></div>
+      <button class="icon-btn" onclick="delTarget(${i})">🗑</button>
+    </div>`).join("");
+}
+function delTarget(i){ S.targets.splice(i,1); if(S.activeTarget===i)S.activeTarget=null; persist(); renderTargets(); }
+function measureGPS(){
+  if(S.activeTarget===null || !S.targets[S.activeTarget]){ toast("先に設定で目標地点を登録してください"); tab('set'); return; }
+  if(!navigator.geolocation){ toast("この端末はGPS非対応"); return; }
+  const btn=document.getElementById("gpsBtn"); const orig=btn.textContent; btn.textContent="📡 測定中…";
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const me={lat:pos.coords.latitude,lng:pos.coords.longitude};
+    const m=haversine(me,S.targets[S.activeTarget]);
+    let d=S.distUnit==="Y"?m*YD_PER_M:m;
+    S.dist=Math.round(d); refreshDistUI(); persist(); recommend();
+    btn.textContent=orig;
+    toast(`${S.targets[S.activeTarget].name} まで ${S.dist}${S.distUnit}（誤差±${Math.round(pos.coords.accuracy)}m）`);
+  },err=>{ btn.textContent=orig; toast("GPS失敗: "+(err.code===1?"許可が必要":"https で開いてください")); },
+  {enableHighAccuracy:true,timeout:10000});
+}
+
+/* ---------- data ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="pocket-caddie-backup.json"; a.click(); toast("書き出しました");
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const o=JSON.parse(r.result); S=Object.assign(S,o); persist(); initAll(); toast("読み込みました"); }catch(x){ toast("ファイルが不正です"); } };
+  r.readAsText(f);
+}
+function resetAll(){
+  if(confirm("全データを初期状態に戻します。よろしいですか？")){
+    try{ localStorage.clear(); }catch(e){}
+    location.reload();
+  }
+}
+
+/* ---------- nav ---------- */
+function tab(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  document.getElementById("v-"+v).classList.add("on");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  window.scrollTo(0,0);
+}
+
+/* ---------- init ---------- */
+function initAll(){
+  refreshDistUI(); refreshElevUI(); renderClubs(); initSettings(); renderTargets(); recommend();
+}
+initAll();
+</script>
+</body>
+</html>
